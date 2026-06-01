@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Read(//usr/local/**)",
+      "Read(//usr/**)",
+      "Read(//c/Users/tusie/AppData/Roaming/**)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Users/tusie/AppData/Local/Programs/**)",
+      "Bash(npm --version)"
+    ]
+  }
+}

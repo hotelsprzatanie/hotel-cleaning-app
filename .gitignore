@@ -1,0 +1,22 @@
+# Zależności
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Build frontendu (generowany na Railway)
+frontend/dist/
+
+# Dane aplikacji (przechowywane na Railway Volume)
+backend/db/hotel.json
+backend/uploads/
+
+# Zmienne środowiskowe (nigdy nie commituj!)
+.env
+.env.local
+frontend/.env
+frontend/.env.local
+
+# Pliki systemowe
+*.local
+.DS_Store
+Thumbs.db
