@@ -15,6 +15,7 @@ db.defaults({
     { id: 3, name: 'Heike',     role: 'cleaner', pin: '2222' },
   ],
   rooms: [
+    // floor: 1 = Haus Borkum, floor: 2 = Kleine Möwe
     { id: 1, number: '101', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
     { id: 2, number: '102', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
     { id: 3, number: '103', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },

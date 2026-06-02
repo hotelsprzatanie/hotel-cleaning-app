@@ -182,10 +182,14 @@ function AddRoomModal({ onClose, onSave }) {
           placeholder="z.B. 101" autoFocus />
       </div>
       <div>
-        <Label>Etage</Label>
-        <input type="number" value={floor} onChange={e => setFloor(e.target.value)}
+        <Label>Bereich</Label>
+        <select value={floor} onChange={e => setFloor(e.target.value)}
           className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base
-                     focus:outline-none focus:border-[#2E86C1]" min="0" />
+                     focus:outline-none focus:border-[#2E86C1] bg-white">
+          <option value="1">Haus Borkum</option>
+          <option value="2">Kleine Möwe</option>
+          <option value="0">Erdgeschoss</option>
+        </select>
       </div>
       {error && <p className="text-[#C0392B] text-sm font-medium">{error}</p>}
       <button onClick={handleSave} disabled={saving} className="btn-ocean w-full">
@@ -396,7 +400,7 @@ export default function Rooms() {
       {Object.keys(byFloor).sort((a, b) => a - b).map(floor => (
         <div key={floor} className="mb-6">
           <div className="section-title">
-            {floor === '0' ? 'Erdgeschoss' : `${floor}. Etage`}
+            {({ '0': 'Erdgeschoss', '1': 'Haus Borkum', '2': 'Kleine Möwe' })[floor] ?? `${floor}. Etage`}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {byFloor[floor].map(room => {
