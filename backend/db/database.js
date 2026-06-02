@@ -15,15 +15,34 @@ db.defaults({
     { id: 3, name: 'Heike',     role: 'cleaner', pin: '2222' },
   ],
   rooms: [
-    // floor: 1 = Haus Borkum, floor: 2 = Kleine Möwe
-    { id: 1, number: '101', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
-    { id: 2, number: '102', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
-    { id: 3, number: '103', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
-    { id: 4, number: '104', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
-    { id: 5, number: '201', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
-    { id: 6, number: '202', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
-    { id: 7, number: '203', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
-    { id: 8, number: '204', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    // floor: 1 = Haus Borkum (01–16), floor: 2 = Kleine Möwe (01–10)
+    // Numery jako string żeby zachować zero-padding ("01", "02" itd.)
+    { id:  1, number: '01', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id:  2, number: '02', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id:  3, number: '03', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id:  4, number: '04', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id:  5, number: '05', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id:  6, number: '06', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id:  7, number: '07', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id:  8, number: '08', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id:  9, number: '09', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 10, number: '10', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 11, number: '11', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 12, number: '12', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 13, number: '13', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 14, number: '14', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 15, number: '15', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 16, number: '16', floor: 1, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 17, number: '01', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 18, number: '02', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 19, number: '03', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 20, number: '04', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 21, number: '05', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 22, number: '06', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 23, number: '07', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 24, number: '08', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 25, number: '09', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
+    { id: 26, number: '10', floor: 2, task_type: 'none', status: 'pending', assigned_to: null, notes: null, started_at: null, finished_at: null, completion_notes: null },
   ],
   common_areas: [
     { id: 1, name: 'Gästetoiletten (Erdgeschoss)',              status: 'pending', assigned_to: null, started_at: null, finished_at: null, completion_notes: null, locked: true },
@@ -32,7 +51,7 @@ db.defaults({
   ],
   issues: [],
   other_tasks: [],
-  _seq: { users: 3, rooms: 8, common_areas: 3, issues: 0, other_tasks: 0 },
+  _seq: { users: 3, rooms: 26, common_areas: 3, issues: 0, other_tasks: 0 },
 }).write();
 
 // ── Migracje ────────────────────────────────────────────────────────────────
@@ -86,9 +105,40 @@ db.get('common_areas').value().forEach(area => {
   }
 });
 
-// 3. Usuń pokoje z 3. piętra
-const floor3 = db.get('rooms').filter({ floor: 3 }).value();
-if (floor3.length > 0) db.get('rooms').remove({ floor: 3 }).write();
+// 3. Migracja pokoi: wyczyść stare i zastąp nową strukturą
+//    Haus Borkum (floor:1) → pokoje 01–16
+//    Kleine Möwe (floor:2) → pokoje 01–10
+const EXPECTED_ROOMS = [
+  { id:  1, number: '01', floor: 1 }, { id:  2, number: '02', floor: 1 },
+  { id:  3, number: '03', floor: 1 }, { id:  4, number: '04', floor: 1 },
+  { id:  5, number: '05', floor: 1 }, { id:  6, number: '06', floor: 1 },
+  { id:  7, number: '07', floor: 1 }, { id:  8, number: '08', floor: 1 },
+  { id:  9, number: '09', floor: 1 }, { id: 10, number: '10', floor: 1 },
+  { id: 11, number: '11', floor: 1 }, { id: 12, number: '12', floor: 1 },
+  { id: 13, number: '13', floor: 1 }, { id: 14, number: '14', floor: 1 },
+  { id: 15, number: '15', floor: 1 }, { id: 16, number: '16', floor: 1 },
+  { id: 17, number: '01', floor: 2 }, { id: 18, number: '02', floor: 2 },
+  { id: 19, number: '03', floor: 2 }, { id: 20, number: '04', floor: 2 },
+  { id: 21, number: '05', floor: 2 }, { id: 22, number: '06', floor: 2 },
+  { id: 23, number: '07', floor: 2 }, { id: 24, number: '08', floor: 2 },
+  { id: 25, number: '09', floor: 2 }, { id: 26, number: '10', floor: 2 },
+];
+
+// Sprawdź czy aktualne pokoje pasują do oczekiwanej struktury
+const currentRooms = db.get('rooms').value();
+const expectedIds  = EXPECTED_ROOMS.map(r => r.id);
+const needsMigration = currentRooms.some(r => !expectedIds.includes(r.id))
+  || currentRooms.length !== EXPECTED_ROOMS.length;
+
+if (needsMigration) {
+  console.log('Migracja: zastępuję pokoje nową strukturą (Haus Borkum + Kleine Möwe)');
+  db.set('rooms', EXPECTED_ROOMS.map(r => ({
+    ...r,
+    task_type: 'none', status: 'pending', assigned_to: null,
+    notes: null, started_at: null, finished_at: null, completion_notes: null,
+  }))).write();
+  db.set('_seq.rooms', 26).write();
+}
 
 // 4. Dodaj brakujące pola czasowe i completion_notes do istniejących rekordów
 ['rooms', 'common_areas', 'other_tasks'].forEach(col => {
