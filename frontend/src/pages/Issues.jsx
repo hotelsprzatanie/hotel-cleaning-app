@@ -15,10 +15,40 @@ const STATUS_COLORS = {
   fixed:       { bg: '#EAFAF1', border: '#27AE60' },
 };
 
+// Modal powiększonego zdjęcia — kliknięcie tła lub ✕ zamyka
+function PhotoModal({ url, onClose }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.85)' }}
+      onClick={onClose}
+    >
+      <div className="relative max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+        <img
+          src={url}
+          alt="Störungsfoto"
+          className="w-full rounded-2xl object-contain"
+          style={{ maxHeight: '85vh' }}
+        />
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center
+                     rounded-full text-white font-bold text-lg"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function IssueCard({ issue, isManager, onStatusChange, onDelete }) {
   const isUrgent = issue.priority === 'urgent';
+  const [photoOpen, setPhotoOpen] = useState(false);
 
   return (
+    <>
     <div className="rounded-2xl overflow-hidden animate-in"
       style={{
         background: isUrgent ? '#FEF0EF' : '#fff',
@@ -29,14 +59,17 @@ function IssueCard({ issue, isManager, onStatusChange, onDelete }) {
       }}>
       <div className="p-4">
         <div className="flex gap-3">
-          {/* Miniatura zdjęcia */}
+          {/* Miniatura zdjęcia — kliknięcie otwiera modal, NIE nawiguje */}
           {issue.photo_url && (
-            <a href={issue.photo_url} target="_blank" rel="noopener noreferrer"
-              className="shrink-0">
+            <button
+              onClick={() => setPhotoOpen(true)}
+              className="shrink-0 active:scale-95 transition-transform"
+              type="button"
+            >
               <img src={issue.photo_url} alt="Störungsfoto"
                 className="w-16 h-16 rounded-xl object-cover"
-                style={{ border: '2px solid #F0F4F8' }} />
-            </a>
+                style={{ border: '2px solid #E2E8F0' }} />
+            </button>
           )}
 
           {/* Treść */}
@@ -93,6 +126,12 @@ function IssueCard({ issue, isManager, onStatusChange, onDelete }) {
         )}
       </div>
     </div>
+
+    {/* Modal powiększonego zdjęcia */}
+    {photoOpen && issue.photo_url && (
+      <PhotoModal url={issue.photo_url} onClose={() => setPhotoOpen(false)} />
+    )}
+    </>
   );
 }
 
