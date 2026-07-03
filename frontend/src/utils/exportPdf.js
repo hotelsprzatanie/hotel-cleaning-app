@@ -9,12 +9,14 @@ const ORANGE = [230, 81, 0];     // #E65100
 const GREY   = [127, 140, 141];  // #7F8C8D
 const LGREY  = [240, 244, 248];  // #F0F4F8
 
+// jsPDF/Helvetica nie obsługuje emoji — używamy tekstu
 const SERVICE_LABELS = {
-  cleaned: '🧹 Zimmer gereinigt',
-  sweet:   '🍬 Süßigkeitenbeutel',
-  dnd:     '🚫 Bitte nicht stören',
-  none:    '— Ohne Auswahl',
+  cleaned: 'Zimmer gereinigt',
+  sweet:   'Suessigkeitenbeutel',
+  dnd:     'Bitte nicht stoeren',
+  none:    'Ohne Auswahl',
 };
+
 
 function fmtMins(mins) {
   if (mins === null || mins === undefined) return '—';
@@ -58,7 +60,7 @@ function parseServiceNotes(raw) {
     const d = JSON.parse(raw);
     const parts = [];
     if (Array.isArray(d.options) && d.options.length > 0)
-      parts.push(...d.options.map(o => SERVICE_LABELS[o] ?? o));
+      parts.push(...d.options.map(o => SERVICE_LABELS[o] ?? o)); // bez emoji
     if (d.notes) parts.push(d.notes);
     return parts.join(', ') || null;
   } catch {
@@ -160,13 +162,19 @@ export async function exportStatisticsPdf({ month, stats, history }) {
     });
     y = doc.lastAutoTable.finalY + 2;
 
-    // Opcje serwisu (tylko jeśli były)
+    // Opcje serwisu (tylko jeśli były) — bez emoji (jsPDF/Helvetica)
     if (stat.rooms_service > 0 && stat.service_options) {
-      const optRows = Object.entries(stat.service_options)
-        .filter(([, v]) => v > 0)
-        .map(([k, v]) => [SERVICE_LABELS[k] ?? k, `${v}×`]);
+      const optRows = [
+        ['cleaned', 'Zimmer gereinigt'],
+        ['sweet',   'Suessigkeitenbeutel'],
+        ['dnd',     'Bitte nicht stoeren'],
+        ['none',    'Ohne Auswahl'],
+      ]
+        .filter(([k]) => (stat.service_options[k] ?? 0) > 0)
+        .map(([k, label]) => [label, `${stat.service_options[k]}x`]);
 
       if (optRows.length) {
+        if (y > 260) { doc.addPage(); y = 16; }
         doc.setTextColor(...ORANGE);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
