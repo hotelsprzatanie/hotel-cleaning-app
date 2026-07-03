@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
+import { exportStatisticsPdf } from '../utils/exportPdf';
 
 // ── Helpers ──────────────────────────────────────────────────────
 function fmt(mins) {
@@ -363,9 +364,10 @@ function CleanerCard({ stat }) {
 
 function StatistikView() {
   const options = monthOptions();
-  const [month, setMonth]  = useState(options[0].val);
-  const [data, setData]    = useState(null);
-  const [loading, setLoad] = useState(true);
+  const [month, setMonth]      = useState(options[0].val);
+  const [data, setData]        = useState(null);
+  const [loading, setLoad]     = useState(true);
+  const [exporting, setExport] = useState(false);
 
   const load = useCallback(async (m) => {
     setLoad(true);
@@ -375,6 +377,19 @@ function StatistikView() {
   }, []);
 
   useEffect(() => { load(month); }, [month, load]);
+
+  async function handleExport() {
+    if (!data) return;
+    setExport(true);
+    try {
+      const history = await api.getHistoryByMonth(month);
+      await exportStatisticsPdf({ month, stats: data.stats, history });
+    } catch (e) {
+      alert('PDF-Export fehlgeschlagen: ' + e.message);
+    } finally {
+      setExport(false);
+    }
+  }
 
   const total = data ? {
     checkout: data.stats.reduce((s, c) => s + (c.rooms_checkout ?? 0), 0),
@@ -390,13 +405,19 @@ function StatistikView() {
 
   return (
     <div>
-      <div className="mb-4">
+      <div className="flex gap-2 mb-4">
         <select value={month} onChange={e => setMonth(e.target.value)}
-          className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base
+          className="flex-1 border-2 border-slate-200 rounded-xl px-4 py-3 text-base
                      font-semibold focus:outline-none focus:border-[#2E86C1] bg-white"
           style={{ color: '#1B4F72' }}>
           {options.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
         </select>
+        <button onClick={handleExport} disabled={exporting || !data}
+          className="shrink-0 flex items-center gap-1.5 px-4 py-3 rounded-xl font-semibold text-sm
+                     text-white transition-all active:scale-95 disabled:opacity-50"
+          style={{ background: '#1B4F72', boxShadow: '0 2px 8px rgba(27,79,114,0.3)' }}>
+          {exporting ? '⏳' : '📄'} {exporting ? 'Wird erstellt...' : 'PDF'}
+        </button>
       </div>
 
       {loading && <Spinner />}

@@ -3,14 +3,21 @@ const router = express.Router();
 const { db } = require('../db/database');
 const { requireManager } = require('../middleware/auth');
 
-// GET /api/statistics/history?days=30
+// GET /api/statistics/history?days=30 lub ?month=2026-07
 router.get('/history', requireManager, (req, res) => {
-  const days = parseInt(req.query.days) || 30;
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  const { month, days } = req.query;
 
-  const entries = db.get('history')
-    .value()
-    .filter(h => h.type !== 'issue' && h.timestamp >= since)
+  let entries = db.get('history').value().filter(h => h.type !== 'issue');
+
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    entries = entries.filter(h => h.timestamp && h.timestamp.startsWith(month));
+  } else {
+    const d = parseInt(days) || 30;
+    const since = new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString();
+    entries = entries.filter(h => h.timestamp >= since);
+  }
+
+  const result = entries
     .map(h => {
       const duration = (h.started_at && h.finished_at)
         ? Math.round((new Date(h.finished_at) - new Date(h.started_at)) / 60000)
@@ -19,7 +26,7 @@ router.get('/history', requireManager, (req, res) => {
     })
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-  res.json(entries);
+  res.json(result);
 });
 
 router.get('/', requireManager, (req, res) => {
