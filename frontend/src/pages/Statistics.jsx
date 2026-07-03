@@ -242,6 +242,20 @@ function StatRow({ icon, label, value, highlight }) {
   );
 }
 
+function fmtTotalWork(mins) {
+  if (!mins) return '—';
+  if (mins < 60) return `${mins} min`;
+  return `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}min`;
+}
+
+function fmtBusiestDay(bd) {
+  if (!bd) return '—';
+  const d = new Date(bd.date);
+  const weekday = d.toLocaleDateString('de-DE', { weekday: 'long' });
+  const dateStr = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  return `${weekday} ${dateStr} — ${bd.count} Aufgaben`;
+}
+
 function CleanerCard({ stat }) {
   const hasRoomTimes = stat.fastest_room || stat.slowest_room;
   return (
@@ -256,13 +270,74 @@ function CleanerCard({ stat }) {
         <span className="font-bold text-lg text-white">{stat.user_name}</span>
       </div>
       <div className="px-4 pt-1 pb-3">
-        <StatRow icon="🛏" label="Zimmer gereinigt"      value={stat.rooms_done}      highlight={stat.rooms_done > 0} />
-        <StatRow icon="🏢" label="Gemeinschaftsbereiche" value={stat.areas_done}      highlight={stat.areas_done > 0} />
-        <StatRow icon="📋" label="Sonstige Aufgaben"     value={stat.tasks_done}      highlight={stat.tasks_done > 0} />
-        <StatRow icon="⚠️" label="Störungen gemeldet"    value={stat.issues_reported} highlight={false} />
-        <StatRow icon="⏱" label="Ø Reinigungszeit"      value={fmt(stat.avg_room_time) ?? '—'} highlight={false} />
+        {/* Pokoje — Abreise + Service rozdzielnie */}
+        <div className="py-2.5" style={{ borderBottom: '1px solid #F0F4F8' }}>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-sm" style={{ color: '#5D6D7E' }}>🛏 Zimmer</span>
+            <span className="font-bold text-sm" style={{ color: stat.rooms_done > 0 ? '#1B4F72' : '#2C3E50' }}>
+              {stat.rooms_done}
+            </span>
+          </div>
+          <div className="flex gap-2 ml-1">
+            <span className="text-xs px-2 py-0.5 rounded-lg font-semibold"
+              style={{ background: '#FFEBEE', color: '#C62828' }}>
+              Abreise: {stat.rooms_checkout ?? 0}
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-lg font-semibold"
+              style={{ background: '#FFF3E0', color: '#E65100' }}>
+              Service: {stat.rooms_service ?? 0}
+            </span>
+          </div>
+          {/* Szczegóły opcji serwisu */}
+          {stat.rooms_service > 0 && stat.service_options && (
+            <div className="mt-2 ml-1 space-y-0.5">
+              {[
+                { key: 'cleaned', icon: '🧹', label: 'Zimmer gereinigt' },
+                { key: 'sweet',   icon: '🍬', label: 'Süßigkeitenbeutel' },
+                { key: 'dnd',     icon: '🚫', label: 'Bitte nicht stören' },
+                { key: 'none',    icon: '—',  label: 'Ohne Auswahl' },
+              ].filter(o => (stat.service_options[o.key] ?? 0) > 0).map(o => (
+                <div key={o.key} className="flex items-center justify-between text-xs"
+                  style={{ color: '#7F8C8D' }}>
+                  <span>{o.icon} {o.label}</span>
+                  <span className="font-semibold" style={{ color: '#5D6D7E' }}>
+                    {stat.service_options[o.key]}×
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <StatRow icon="🏢" label="Gemeinschaftsbereiche"   value={stat.areas_done}                         highlight={stat.areas_done > 0} />
+        <StatRow icon="📋" label="Sonstige Aufgaben"       value={stat.tasks_done}                         highlight={stat.tasks_done > 0} />
+        <StatRow icon="⚠️" label="Störungen gemeldet"      value={stat.issues_reported}                    highlight={false} />
+        <StatRow icon="⏱" label="Gesamtarbeitszeit"       value={fmtTotalWork(stat.total_work_mins)}      highlight={false} />
+        <StatRow icon="📅" label="Aktivster Tag"           value={fmtBusiestDay(stat.busiest_day)}         highlight={false} />
+
+        {/* Średnie czasy per typ */}
+        {(stat.avg_checkout_time !== null || stat.avg_service_time !== null) && (
+          <div className="mt-3 mb-2 flex gap-2">
+            <div className="flex-1 rounded-xl px-3 py-2 text-center"
+              style={{ background: '#FFEBEE', border: '1px solid #FFCDD2' }}>
+              <div className="text-xs mb-0.5 font-semibold" style={{ color: '#C62828' }}>Ø Abreise</div>
+              <div className="font-bold text-sm" style={{ color: '#C62828' }}>
+                {fmt(stat.avg_checkout_time) ?? '—'}
+              </div>
+            </div>
+            <div className="flex-1 rounded-xl px-3 py-2 text-center"
+              style={{ background: '#FFF3E0', border: '1px solid #FFE0B2' }}>
+              <div className="text-xs mb-0.5 font-semibold" style={{ color: '#E65100' }}>Ø Service</div>
+              <div className="font-bold text-sm" style={{ color: '#E65100' }}>
+                {fmt(stat.avg_service_time) ?? '—'}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Najszybszy / najwolniejszy pokój */}
         {hasRoomTimes && (
-          <div className="mt-3 flex gap-2">
+          <div className="flex gap-2 mt-1">
             {stat.fastest_room && (
               <div className="flex-1 rounded-xl px-3 py-2 text-center"
                 style={{ background: '#EAFAF1', border: '1px solid #A9DFBF' }}>
@@ -302,10 +377,11 @@ function StatistikView() {
   useEffect(() => { load(month); }, [month, load]);
 
   const total = data ? {
-    rooms:  data.stats.reduce((s, c) => s + c.rooms_done, 0),
-    areas:  data.stats.reduce((s, c) => s + c.areas_done, 0),
-    tasks:  data.stats.reduce((s, c) => s + c.tasks_done, 0),
-    issues: data.stats.reduce((s, c) => s + c.issues_reported, 0),
+    checkout: data.stats.reduce((s, c) => s + (c.rooms_checkout ?? 0), 0),
+    service:  data.stats.reduce((s, c) => s + (c.rooms_service  ?? 0), 0),
+    areas:    data.stats.reduce((s, c) => s + c.areas_done, 0),
+    tasks:    data.stats.reduce((s, c) => s + c.tasks_done, 0),
+    issues:   data.stats.reduce((s, c) => s + c.issues_reported, 0),
   } : null;
 
   const empty = data?.stats.every(
@@ -330,16 +406,16 @@ function StatistikView() {
           {total && (
             <div className="grid grid-cols-4 gap-2 mb-4">
               {[
-                { icon: '🛏', val: total.rooms,  label: 'Zimmer' },
-                { icon: '🏢', val: total.areas,  label: 'Bereiche' },
-                { icon: '📋', val: total.tasks,  label: 'Aufgaben' },
-                { icon: '⚠️', val: total.issues, label: 'Störungen' },
-              ].map(({ icon, val, label }) => (
+                { icon: '🛏', val: total.checkout, label: 'Abreise',   color: '#C62828', bg: '#FFEBEE' },
+                { icon: '🧹', val: total.service,  label: 'Service',   color: '#E65100', bg: '#FFF3E0' },
+                { icon: '🏢', val: total.areas,    label: 'Bereiche',  color: '#1B4F72', bg: null },
+                { icon: '📋', val: total.tasks,    label: 'Aufgaben',  color: '#1B4F72', bg: null },
+              ].map(({ icon, val, label, color, bg }) => (
                 <div key={label} className="rounded-2xl p-2.5 text-center"
-                  style={{ background: '#fff', boxShadow: '0 2px 8px rgba(27,79,114,0.07)', border: '1px solid #E8EEF4' }}>
+                  style={{ background: bg ?? '#fff', boxShadow: '0 2px 8px rgba(27,79,114,0.07)', border: '1px solid #E8EEF4' }}>
                   <div className="text-xl mb-0.5">{icon}</div>
-                  <div className="font-bold text-lg leading-none" style={{ color: '#1B4F72' }}>{val}</div>
-                  <div className="text-xs mt-0.5" style={{ color: '#7F8C8D' }}>{label}</div>
+                  <div className="font-bold text-lg leading-none" style={{ color }}>{val}</div>
+                  <div className="text-xs mt-0.5" style={{ color: color ?? '#7F8C8D' }}>{label}</div>
                 </div>
               ))}
             </div>
