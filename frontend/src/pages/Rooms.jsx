@@ -39,15 +39,11 @@ function ServiceBadges({ raw }) {
 
 // ── Modal serwisowy (checkboxy) ─────────────────────────────────
 function ServiceCompletionModal({ room, onConfirm, onCancel }) {
-  const [selected, setSelected] = useState([]);
+  const [selected, setSelected] = useState(null);
   const [notes, setNotes]       = useState('');
 
-  function toggle(key) {
-    setSelected(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
-  }
-
   function handleConfirm() {
-    const payload = JSON.stringify({ options: selected, notes: notes.trim() || undefined });
+    const payload = JSON.stringify({ options: selected ? [selected] : [], notes: notes.trim() || undefined });
     onConfirm(payload);
   }
 
@@ -65,20 +61,20 @@ function ServiceCompletionModal({ room, onConfirm, onCancel }) {
 
         <div className="space-y-2">
           {SERVICE_OPTIONS.map(opt => {
-            const checked = selected.includes(opt.key);
+            const active = selected === opt.key;
             return (
-              <button key={opt.key} onClick={() => toggle(opt.key)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left"
-                style={checked
-                  ? { background: '#FFF3E0', borderColor: '#E67E22', color: '#C05000' }
+              <button key={opt.key} onClick={() => setSelected(opt.key)}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all text-left active:scale-[0.98]"
+                style={active
+                  ? { background: '#1B4F72', borderColor: '#1B4F72', color: '#fff' }
                   : { background: '#F8FAFB', borderColor: '#E2E8F0', color: '#5D6D7E' }}>
-                <span className="text-xl">{opt.icon}</span>
+                <span className="text-2xl">{opt.icon}</span>
                 <span className="font-semibold text-sm flex-1">{opt.label}</span>
-                <span className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0"
-                  style={checked
-                    ? { background: '#E67E22', borderColor: '#E67E22', color: '#fff' }
+                <span className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                  style={active
+                    ? { background: '#fff', borderColor: '#fff' }
                     : { borderColor: '#CBD5E1' }}>
-                  {checked && '✓'}
+                  {active && <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#1B4F72' }} />}
                 </span>
               </button>
             );
