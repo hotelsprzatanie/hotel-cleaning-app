@@ -6,6 +6,107 @@ import StatusBadge from '../components/StatusBadge';
 import CompletionModal from '../components/CompletionModal';
 import { formatDuration } from '../utils/time';
 
+// ── Opcje serwisowe ─────────────────────────────────────────────
+const SERVICE_OPTIONS = [
+  { key: 'cleaned', icon: '🧹', label: 'Zimmer gereinigt' },
+  { key: 'sweet',   icon: '🍬', label: 'Süßigkeitenbeutel' },
+  { key: 'dnd',     icon: '🚫', label: 'Bitte nicht stören' },
+];
+
+function parseCompletion(raw) {
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return { notes: raw }; }
+}
+
+function ServiceBadges({ raw }) {
+  const data = parseCompletion(raw);
+  if (!data) return null;
+  const opts = data.options || [];
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {SERVICE_OPTIONS.filter(o => opts.includes(o.key)).map(o => (
+        <span key={o.key} className="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-lg font-medium"
+          style={{ background: 'rgba(230,126,34,0.12)', color: '#C05000' }}>
+          {o.icon} {o.label}
+        </span>
+      ))}
+      {data.notes && (
+        <span className="text-xs italic" style={{ color: '#7D6608' }}>💬 {data.notes}</span>
+      )}
+    </div>
+  );
+}
+
+// ── Modal serwisowy (checkboxy) ─────────────────────────────────
+function ServiceCompletionModal({ room, onConfirm, onCancel }) {
+  const [selected, setSelected] = useState([]);
+  const [notes, setNotes]       = useState('');
+
+  function toggle(key) {
+    setSelected(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  }
+
+  function handleConfirm() {
+    const payload = JSON.stringify({ options: selected, notes: notes.trim() || undefined });
+    onConfirm(payload);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.45)' }}>
+      <div className="w-full max-w-sm rounded-3xl p-6 space-y-4"
+        style={{ background: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+        <div>
+          <p className="text-xs font-semibold mb-0.5" style={{ color: '#7F8C8D' }}>
+            Zimmer {room.number} · Service
+          </p>
+          <h2 className="text-xl font-bold" style={{ color: '#1B4F72' }}>Was wurde gemacht?</h2>
+        </div>
+
+        <div className="space-y-2">
+          {SERVICE_OPTIONS.map(opt => {
+            const checked = selected.includes(opt.key);
+            return (
+              <button key={opt.key} onClick={() => toggle(opt.key)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left"
+                style={checked
+                  ? { background: '#FFF3E0', borderColor: '#E67E22', color: '#C05000' }
+                  : { background: '#F8FAFB', borderColor: '#E2E8F0', color: '#5D6D7E' }}>
+                <span className="text-xl">{opt.icon}</span>
+                <span className="font-semibold text-sm flex-1">{opt.label}</span>
+                <span className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0"
+                  style={checked
+                    ? { background: '#E67E22', borderColor: '#E67E22', color: '#fff' }
+                    : { borderColor: '#CBD5E1' }}>
+                  {checked && '✓'}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <textarea value={notes} onChange={e => setNotes(e.target.value)}
+          className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base
+                     focus:outline-none focus:border-[#2E86C1] resize-none"
+          rows={2} placeholder="Zusätzliche Anmerkungen (optional)" />
+
+        <div className="flex gap-2">
+          <button onClick={onCancel}
+            className="flex-1 py-3 rounded-xl font-semibold border-2 text-sm"
+            style={{ borderColor: '#E2E8F0', color: '#7F8C8D' }}>
+            Abbrechen
+          </button>
+          <button onClick={handleConfirm}
+            className="flex-1 py-3 rounded-xl font-semibold text-sm text-white"
+            style={{ background: '#1E8449' }}>
+            Abschließen ✓
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Kolory typów ────────────────────────────────────────────────
 // cardBg  — tło całej karty sprzątaczki (jasne odcienie)
 // text    — kolor tekstu głównego na kartach sprzątaczki
@@ -97,12 +198,31 @@ function RoomModal({ room, cleaners, onClose, onSave, onReset }) {
           ⏱ Reinigungsdauer: <strong>{duration}</strong>
         </div>
       )}
-      {room.completion_notes && (
-        <div className="rounded-xl px-4 py-3 text-sm"
-          style={{ background: '#F0E6CC', color: '#7D6608' }}>
-          <span className="font-semibold">💬 Anmerkung:</span> {room.completion_notes}
-        </div>
-      )}
+      {room.completion_notes && (() => {
+        const data = parseCompletion(room.completion_notes);
+        const opts = data?.options || [];
+        return (
+          <div className="rounded-xl px-4 py-3 text-sm space-y-2"
+            style={{ background: '#F0E6CC', color: '#7D6608' }}>
+            {opts.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {SERVICE_OPTIONS.filter(o => opts.includes(o.key)).map(o => (
+                  <span key={o.key} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl font-semibold text-xs"
+                    style={{ background: 'rgba(230,126,34,0.18)', color: '#C05000' }}>
+                    {o.icon} {o.label}
+                  </span>
+                ))}
+              </div>
+            )}
+            {data?.notes && (
+              <p><span className="font-semibold">💬 Anmerkung:</span> {data.notes}</p>
+            )}
+            {!opts.length && !data?.notes && (
+              <p><span className="font-semibold">💬 Anmerkung:</span> {room.completion_notes}</p>
+            )}
+          </div>
+        );
+      })()}
       <div>
         <Label>Auftragstyp</Label>
         <div className="flex gap-2">
@@ -211,6 +331,7 @@ export default function Rooms() {
   const [loading, setLoading]          = useState(true);
   const [filter, setFilter]            = useState('all');
   const [completionRoom, setComplRoom] = useState(null);
+  const [serviceRoom, setServiceRoom]  = useState(null);
 
   const fetchRooms = useCallback(async () => {
     const data = await api.getRooms();
@@ -229,11 +350,19 @@ export default function Rooms() {
     catch (e) { alert(e.message); }
   }
 
-  function handleFertigClick(room) { setComplRoom(room); }
+  function handleFertigClick(room) {
+    if (room.task_type === 'service') setServiceRoom(room);
+    else setComplRoom(room);
+  }
 
   async function handleCompletionConfirm(notes) {
     await handleStatusChange(completionRoom, 'done', notes);
     setComplRoom(null);
+  }
+
+  async function handleServiceConfirm(payload) {
+    await handleStatusChange(serviceRoom, 'done', payload);
+    setServiceRoom(null);
   }
 
   // Bestätigen = reset pokoju (pending, brak sprzątaczki, brak notatek)
@@ -338,12 +467,20 @@ export default function Rooms() {
           })}
         </div>
 
-        {/* CompletionModal — musi być w gałęzi sprzątaczki */}
+        {/* Modal Abreise — zwykłe pole uwag */}
         {completionRoom && (
           <CompletionModal
             title={`Zimmer ${completionRoom.number}`}
             onConfirm={handleCompletionConfirm}
             onCancel={() => setComplRoom(null)}
+          />
+        )}
+        {/* Modal Service — checkboxy */}
+        {serviceRoom && (
+          <ServiceCompletionModal
+            room={serviceRoom}
+            onConfirm={handleServiceConfirm}
+            onCancel={() => setServiceRoom(null)}
           />
         )}
       </>
@@ -436,9 +573,7 @@ export default function Rooms() {
                     </div>
                   )}
                   {room.completion_notes && (
-                    <div className="text-xs mt-1 italic truncate" style={{ color: '#7D6608' }}>
-                      💬 {room.completion_notes}
-                    </div>
+                    <ServiceBadges raw={room.completion_notes} />
                   )}
                   <button onClick={e => { e.stopPropagation(); handleDelete(room); }}
                     className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center
