@@ -46,6 +46,7 @@ export const api = {
   deleteTask:    (id)                    => request('DELETE', `/tasks/${id}`),
 
   getStatistics: (month) => request('GET', `/statistics?month=${month}`),
+  getHistory:    (days = 30) => request('GET', `/statistics/history?days=${days}`),
 
   getCleaners: ()              => request('GET',    '/users/cleaners'),
   addUser:     (name, role, pin) => request('POST', '/users', { name, role, pin }),

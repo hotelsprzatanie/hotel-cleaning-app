@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 
+// ── Helpers ──────────────────────────────────────────────────────
 function fmt(mins) {
-  if (mins === null || mins === undefined) return '—';
+  if (mins === null || mins === undefined) return null;
+  if (mins < 1) return '< 1 min';
   if (mins < 60) return `${mins} min`;
   return `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}min`;
 }
@@ -19,15 +21,221 @@ function monthOptions() {
   return opts;
 }
 
+const SERVICE_OPTIONS = [
+  { key: 'cleaned', icon: '🧹', label: 'Zimmer gereinigt' },
+  { key: 'sweet',   icon: '🍬', label: 'Süßigkeitenbeutel' },
+  { key: 'dnd',     icon: '🚫', label: 'Bitte nicht stören' },
+];
+
+function parseCompletion(raw) {
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return { notes: raw }; }
+}
+
+// ── Spinner ──────────────────────────────────────────────────────
+function Spinner() {
+  return (
+    <div className="flex flex-col items-center justify-center h-48 gap-3">
+      <div className="w-8 h-8 rounded-full animate-spin"
+        style={{ border: '3px solid #2E86C1', borderTopColor: 'transparent' }} />
+      <p style={{ color: '#7F8C8D' }}>Wird geladen...</p>
+    </div>
+  );
+}
+
+// ── Tab-Switcher ─────────────────────────────────────────────────
+function TabBar({ active, onChange }) {
+  return (
+    <div className="flex gap-1 mb-4 p-1 rounded-2xl" style={{ background: '#E8EEF4' }}>
+      {[['verlauf', '🕐 Verlauf'], ['statistik', '📊 Statistik']].map(([key, label]) => (
+        <button key={key} onClick={() => onChange(key)}
+          className="flex-1 py-2 rounded-xl text-sm font-semibold transition-all"
+          style={active === key
+            ? { background: '#1B4F72', color: '#fff', boxShadow: '0 2px 8px rgba(27,79,114,0.25)' }
+            : { color: '#7F8C8D' }}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── VERLAUF ──────────────────────────────────────────────────────
+const TYPE_META = {
+  room_checkout: { icon: '🛏', label: 'Abreise',       color: '#C62828', bg: '#FFEBEE' },
+  room_service:  { icon: '🧹', label: 'Service',        color: '#E65100', bg: '#FFF3E0' },
+  area:          { icon: '🏢', label: 'Gemeinschaft',   color: '#1B4F72', bg: '#EBF5FB' },
+  task:          { icon: '📋', label: 'Sonstiges',      color: '#6C3483', bg: '#F5EEF8' },
+};
+
+function entryMeta(entry) {
+  if (entry.type === 'room') {
+    return TYPE_META[`room_${entry.task_type}`] ?? TYPE_META.room_service;
+  }
+  return TYPE_META[entry.type] ?? { icon: '•', label: entry.type, color: '#7F8C8D', bg: '#F5F5F5' };
+}
+
+function entryTitle(entry) {
+  if (entry.type === 'room') return `Zimmer ${entry.room_number}`;
+  if (entry.type === 'area') return entry.area_name;
+  if (entry.type === 'task') return entry.description;
+  return '—';
+}
+
+function CompletionDetail({ raw, taskType }) {
+  const data = parseCompletion(raw);
+  if (!data) return null;
+  const opts = data.options || [];
+  const isServiceJson = Array.isArray(data.options);
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {isServiceJson && opts.length > 0 && SERVICE_OPTIONS.filter(o => opts.includes(o.key)).map(o => (
+        <span key={o.key} className="text-xs px-1.5 py-0.5 rounded-lg font-medium"
+          style={{ background: 'rgba(230,126,34,0.12)', color: '#C05000' }}>
+          {o.icon} {o.label}
+        </span>
+      ))}
+      {data.notes && (
+        <span className="text-xs italic" style={{ color: '#7D6608' }}>💬 {data.notes}</span>
+      )}
+      {!isServiceJson && data.notes && (
+        <span className="text-xs italic" style={{ color: '#7D6608' }}>💬 {data.notes}</span>
+      )}
+    </div>
+  );
+}
+
+function HistoryEntry({ entry }) {
+  const meta = entryMeta(entry);
+  const duration = fmt(entry.duration_mins);
+  const dt = new Date(entry.timestamp);
+  const dateStr = dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  const timeStr = dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+  return (
+    <div className="flex gap-3 py-3" style={{ borderBottom: '1px solid #F0F4F8' }}>
+      {/* Ikona typu */}
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-lg"
+        style={{ background: meta.bg }}>
+        {meta.icon}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <span className="font-semibold text-sm" style={{ color: '#2C3E50' }}>
+              {entryTitle(entry)}
+            </span>
+            <span className="ml-1.5 text-xs font-semibold px-1.5 py-0.5 rounded-md"
+              style={{ background: meta.bg, color: meta.color }}>
+              {meta.label}
+            </span>
+          </div>
+          <div className="text-right shrink-0">
+            <div className="text-xs font-semibold" style={{ color: '#2C3E50' }}>{dateStr}</div>
+            <div className="text-xs" style={{ color: '#7F8C8D' }}>{timeStr}</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-xs" style={{ color: '#7F8C8D' }}>👤 {entry.user_name}</span>
+          {duration && (
+            <span className="text-xs" style={{ color: '#7F8C8D' }}>· ⏱ {duration}</span>
+          )}
+        </div>
+
+        {entry.completion_notes && (
+          <CompletionDetail raw={entry.completion_notes} taskType={entry.task_type} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function VerlaufView() {
+  const [entries, setEntries]     = useState([]);
+  const [loading, setLoad]        = useState(true);
+  const [cleanerFilter, setFilter] = useState('all');
+
+  const load = useCallback(async () => {
+    setLoad(true);
+    try {
+      const data = await api.getHistory(30);
+      setEntries(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoad(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const cleaners = [...new Set(entries.map(e => e.user_name))].sort();
+  const filtered = cleanerFilter === 'all'
+    ? entries
+    : entries.filter(e => e.user_name === cleanerFilter);
+
+  // Grupuj po dacie
+  const grouped = filtered.reduce((acc, entry) => {
+    const day = new Date(entry.timestamp).toLocaleDateString('de-DE', {
+      weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+    });
+    (acc[day] = acc[day] || []).push(entry);
+    return acc;
+  }, {});
+
+  return (
+    <div>
+      {/* Filtr sprzątaczki */}
+      <div className="flex gap-1.5 flex-wrap mb-3">
+        <button onClick={() => setFilter('all')}
+          className={cleanerFilter === 'all' ? 'filter-pill-active' : 'filter-pill-inactive'}>
+          Alle
+        </button>
+        {cleaners.map(name => (
+          <button key={name} onClick={() => setFilter(name)}
+            className={cleanerFilter === name ? 'filter-pill-active' : 'filter-pill-inactive'}>
+            {name}
+          </button>
+        ))}
+      </div>
+
+      {loading && <Spinner />}
+
+      {!loading && filtered.length === 0 && (
+        <div className="card text-center py-12" style={{ color: '#7F8C8D' }}>
+          <div className="text-4xl mb-2">🕐</div>
+          <p>Kein Verlauf der letzten 30 Tage</p>
+          <p className="text-xs mt-1">Daten werden ab sofort aufgezeichnet</p>
+        </div>
+      )}
+
+      {!loading && Object.entries(grouped).map(([day, dayEntries]) => (
+        <div key={day} className="mb-2">
+          <div className="text-xs font-bold uppercase tracking-wide mb-1 px-1"
+            style={{ color: '#7F8C8D' }}>
+            {day}
+          </div>
+          <div className="rounded-2xl px-3"
+            style={{ background: '#fff', border: '1px solid #E8EEF4', boxShadow: '0 2px 8px rgba(27,79,114,0.06)' }}>
+            {dayEntries.map(entry => (
+              <HistoryEntry key={entry.id} entry={entry} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── STATISTIK ────────────────────────────────────────────────────
 function StatRow({ icon, label, value, highlight }) {
   return (
     <div className="flex items-center justify-between py-2.5"
       style={{ borderBottom: '1px solid #F0F4F8' }}>
-      <span className="text-sm" style={{ color: '#5D6D7E' }}>
-        {icon} {label}
-      </span>
-      <span className="font-bold text-sm"
-        style={{ color: highlight ? '#1B4F72' : '#2C3E50' }}>
+      <span className="text-sm" style={{ color: '#5D6D7E' }}>{icon} {label}</span>
+      <span className="font-bold text-sm" style={{ color: highlight ? '#1B4F72' : '#2C3E50' }}>
         {value}
       </span>
     </div>
@@ -36,11 +244,9 @@ function StatRow({ icon, label, value, highlight }) {
 
 function CleanerCard({ stat }) {
   const hasRoomTimes = stat.fastest_room || stat.slowest_room;
-
   return (
     <div className="rounded-2xl overflow-hidden animate-in"
       style={{ background: '#fff', boxShadow: '0 2px 12px rgba(27,79,114,0.08)', border: '1px solid #E8EEF4' }}>
-      {/* Nagłówek karty */}
       <div className="px-4 py-3 flex items-center gap-3"
         style={{ background: 'linear-gradient(135deg, #1B4F72, #2E86C1)' }}>
         <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
@@ -49,38 +255,28 @@ function CleanerCard({ stat }) {
         </div>
         <span className="font-bold text-lg text-white">{stat.user_name}</span>
       </div>
-
       <div className="px-4 pt-1 pb-3">
-        <StatRow icon="🛏" label="Zimmer gereinigt"       value={stat.rooms_done}       highlight={stat.rooms_done > 0} />
-        <StatRow icon="🏢" label="Gemeinschaftsbereiche"  value={stat.areas_done}       highlight={stat.areas_done > 0} />
-        <StatRow icon="📋" label="Sonstige Aufgaben"      value={stat.tasks_done}       highlight={stat.tasks_done > 0} />
-        <StatRow icon="⚠️" label="Störungen gemeldet"     value={stat.issues_reported}  highlight={false} />
-        <StatRow icon="⏱" label="Ø Reinigungszeit"       value={fmt(stat.avg_room_time)} highlight={false} />
-
+        <StatRow icon="🛏" label="Zimmer gereinigt"      value={stat.rooms_done}      highlight={stat.rooms_done > 0} />
+        <StatRow icon="🏢" label="Gemeinschaftsbereiche" value={stat.areas_done}      highlight={stat.areas_done > 0} />
+        <StatRow icon="📋" label="Sonstige Aufgaben"     value={stat.tasks_done}      highlight={stat.tasks_done > 0} />
+        <StatRow icon="⚠️" label="Störungen gemeldet"    value={stat.issues_reported} highlight={false} />
+        <StatRow icon="⏱" label="Ø Reinigungszeit"      value={fmt(stat.avg_room_time) ?? '—'} highlight={false} />
         {hasRoomTimes && (
           <div className="mt-3 flex gap-2">
             {stat.fastest_room && (
               <div className="flex-1 rounded-xl px-3 py-2 text-center"
                 style={{ background: '#EAFAF1', border: '1px solid #A9DFBF' }}>
                 <div className="text-xs mb-0.5" style={{ color: '#1E8449' }}>🚀 Schnellstes</div>
-                <div className="font-bold text-sm" style={{ color: '#1E8449' }}>
-                  Zi. {stat.fastest_room.number}
-                </div>
-                <div className="text-xs font-medium" style={{ color: '#27AE60' }}>
-                  {fmt(stat.fastest_room.mins)}
-                </div>
+                <div className="font-bold text-sm" style={{ color: '#1E8449' }}>Zi. {stat.fastest_room.number}</div>
+                <div className="text-xs font-medium" style={{ color: '#27AE60' }}>{fmt(stat.fastest_room.mins)}</div>
               </div>
             )}
             {stat.slowest_room && (
               <div className="flex-1 rounded-xl px-3 py-2 text-center"
                 style={{ background: '#FEF9E7', border: '1px solid #F9E79F' }}>
                 <div className="text-xs mb-0.5" style={{ color: '#B7950B' }}>🐢 Längstes</div>
-                <div className="font-bold text-sm" style={{ color: '#B7950B' }}>
-                  Zi. {stat.slowest_room.number}
-                </div>
-                <div className="text-xs font-medium" style={{ color: '#D4AC0D' }}>
-                  {fmt(stat.slowest_room.mins)}
-                </div>
+                <div className="font-bold text-sm" style={{ color: '#B7950B' }}>Zi. {stat.slowest_room.number}</div>
+                <div className="text-xs font-medium" style={{ color: '#D4AC0D' }}>{fmt(stat.slowest_room.mins)}</div>
               </div>
             )}
           </div>
@@ -90,26 +286,20 @@ function CleanerCard({ stat }) {
   );
 }
 
-export default function Statistics() {
+function StatistikView() {
   const options = monthOptions();
-  const [month, setMonth]   = useState(options[0].val);
-  const [data, setData]     = useState(null);
-  const [loading, setLoad]  = useState(true);
-  const [error, setError]   = useState('');
+  const [month, setMonth]  = useState(options[0].val);
+  const [data, setData]    = useState(null);
+  const [loading, setLoad] = useState(true);
 
-  const fetch = useCallback(async (m) => {
-    setLoad(true); setError('');
-    try {
-      const result = await api.getStatistics(m);
-      setData(result);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoad(false);
-    }
+  const load = useCallback(async (m) => {
+    setLoad(true);
+    try { setData(await api.getStatistics(m)); }
+    catch (e) { console.error(e); }
+    finally { setLoad(false); }
   }, []);
 
-  useEffect(() => { fetch(month); }, [month, fetch]);
+  useEffect(() => { load(month); }, [month, load]);
 
   const total = data ? {
     rooms:  data.stats.reduce((s, c) => s + c.rooms_done, 0),
@@ -118,38 +308,25 @@ export default function Statistics() {
     issues: data.stats.reduce((s, c) => s + c.issues_reported, 0),
   } : null;
 
+  const empty = data?.stats.every(
+    s => s.rooms_done === 0 && s.areas_done === 0 && s.tasks_done === 0 && s.issues_reported === 0
+  );
+
   return (
     <div>
-      {/* Filtr miesiąca */}
       <div className="mb-4">
         <select value={month} onChange={e => setMonth(e.target.value)}
           className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-base
                      font-semibold focus:outline-none focus:border-[#2E86C1] bg-white"
           style={{ color: '#1B4F72' }}>
-          {options.map(o => (
-            <option key={o.val} value={o.val}>{o.label}</option>
-          ))}
+          {options.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
         </select>
       </div>
 
-      {loading && (
-        <div className="flex flex-col items-center justify-center h-48 gap-3">
-          <div className="w-8 h-8 rounded-full animate-spin"
-            style={{ border: '3px solid #2E86C1', borderTopColor: 'transparent' }} />
-          <p style={{ color: '#7F8C8D' }}>Wird geladen...</p>
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded-xl px-4 py-3 text-sm font-medium mb-4"
-          style={{ background: '#FDEDEC', color: '#C0392B' }}>
-          {error}
-        </div>
-      )}
+      {loading && <Spinner />}
 
       {!loading && data && (
         <>
-          {/* Podsumowanie miesiąca */}
           {total && (
             <div className="grid grid-cols-4 gap-2 mb-4">
               {[
@@ -167,15 +344,10 @@ export default function Statistics() {
               ))}
             </div>
           )}
-
-          {/* Karty sprzątaczek */}
           <div className="space-y-4">
-            {data.stats.map(stat => (
-              <CleanerCard key={stat.user_id} stat={stat} />
-            ))}
+            {data.stats.map(stat => <CleanerCard key={stat.user_id} stat={stat} />)}
           </div>
-
-          {data.stats.every(s => s.rooms_done === 0 && s.areas_done === 0 && s.tasks_done === 0 && s.issues_reported === 0) && (
+          {empty && (
             <div className="card text-center py-12 mt-2" style={{ color: '#7F8C8D' }}>
               <div className="text-4xl mb-2">📊</div>
               <p>Keine Daten für diesen Monat</p>
@@ -184,6 +356,18 @@ export default function Statistics() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+// ── Root ─────────────────────────────────────────────────────────
+export default function Statistics() {
+  const [tab, setTab] = useState('verlauf');
+  return (
+    <div>
+      <TabBar active={tab} onChange={setTab} />
+      {tab === 'verlauf'   && <VerlaufView />}
+      {tab === 'statistik' && <StatistikView />}
     </div>
   );
 }

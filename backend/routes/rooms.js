@@ -113,15 +113,16 @@ router.put('/:id/status', requireAuth, (req, res) => {
   // Zapisz historię ukończenia
   if (status === 'done') {
     db.get('history').push({
-      id:         nextId('history'),
-      type:       'room',
-      user_id:    user.id,
-      user_name:  user.name,
-      task_type:  room.task_type,
-      room_number: room.number,
-      started_at: room.started_at,
-      finished_at: now,
-      timestamp:  now,
+      id:               nextId('history'),
+      type:             'room',
+      user_id:          user.id,
+      user_name:        user.name,
+      task_type:        room.task_type,
+      room_number:      room.number,
+      started_at:       room.started_at,
+      finished_at:      now,
+      completion_notes: completion_notes || null,
+      timestamp:        now,
     }).write();
   }
 

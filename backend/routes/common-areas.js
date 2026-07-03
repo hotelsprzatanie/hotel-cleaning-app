@@ -101,14 +101,15 @@ router.put('/:id/status', requireAuth, (req, res) => {
   // Zapisz historię ukończenia
   if (status === 'done') {
     db.get('history').push({
-      id:         nextId('history'),
-      type:       'area',
-      user_id:    user.id,
-      user_name:  user.name,
-      area_name:  area.name,
-      started_at: area.started_at,
-      finished_at: now,
-      timestamp:  now,
+      id:               nextId('history'),
+      type:             'area',
+      user_id:          user.id,
+      user_name:        user.name,
+      area_name:        area.name,
+      started_at:       area.started_at,
+      finished_at:      now,
+      completion_notes: completion_notes || null,
+      timestamp:        now,
     }).write();
   }
 
