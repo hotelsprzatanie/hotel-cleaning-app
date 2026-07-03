@@ -51,7 +51,8 @@ db.defaults({
   ],
   issues: [],
   other_tasks: [],
-  _seq: { users: 3, rooms: 26, common_areas: 3, issues: 0, other_tasks: 0 },
+  history: [],
+  _seq: { users: 3, rooms: 26, common_areas: 3, issues: 0, other_tasks: 0, history: 0 },
 }).write();
 
 // ── Migracje ────────────────────────────────────────────────────────────────
@@ -150,6 +151,14 @@ if (needsMigration) {
     if (Object.keys(u).length) db.get(col).find({ id: item.id }).assign(u).write();
   });
 });
+
+// 5. Migracja: dodaj history i _seq.history jeśli nie istnieje
+if (!db.has('history').value()) {
+  db.set('history', []).write();
+}
+if (db.get('_seq.history').value() === undefined) {
+  db.set('_seq.history', 0).write();
+}
 
 // ── Helper ───────────────────────────────────────────────────────────────────
 function nextId(collection) {

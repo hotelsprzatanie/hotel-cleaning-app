@@ -7,6 +7,7 @@ import Rooms from './pages/Rooms';
 import CommonAreas from './pages/CommonAreas';
 import Issues from './pages/Issues';
 import OtherTasks from './pages/OtherTasks';
+import Statistics from './pages/Statistics';
 import { useUrgentNotifications } from './hooks/useUrgentNotifications';
 
 function AppRoutes() {
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="/common-areas" element={<CommonAreas />} />
         <Route path="/issues"       element={<Issues />} />
         <Route path="/tasks"        element={<OtherTasks />} />
+        {isManager && <Route path="/statistics" element={<Statistics />} />}
         <Route path="*"             element={<Navigate to="/rooms" replace />} />
       </Routes>
     </Layout>

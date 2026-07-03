@@ -7,6 +7,7 @@ const PAGE_TITLES = {
   '/common-areas': 'Gemeinschaftsbereiche',
   '/issues':       'Störungen',
   '/tasks':        'Sonstiges',
+  '/statistics':   'Statistik',
 };
 
 export default function Layout({ children }) {

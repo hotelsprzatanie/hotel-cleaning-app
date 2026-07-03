@@ -39,6 +39,7 @@ app.use('/api/common-areas', require('./routes/common-areas'));
 app.use('/api/issues',       require('./routes/issues'));
 app.use('/api/tasks',        require('./routes/other-tasks'));
 app.use('/api/users',        require('./routes/users'));
+app.use('/api/statistics',   require('./routes/statistics'));
 
 // W produkcji serwuj zbudowany frontend
 if (isProd) {

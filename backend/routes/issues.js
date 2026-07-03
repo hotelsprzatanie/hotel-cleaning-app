@@ -74,6 +74,17 @@ router.post('/', requireAuth, upload.single('photo'), (req, res) => {
     created_at: new Date().toISOString(),
   };
   db.get('issues').push(issue).write();
+
+  // Zapisz w historii
+  db.get('history').push({
+    id:        nextId('history'),
+    type:      'issue',
+    user_id:   req.session.user.id,
+    user_name: req.session.user.name,
+    priority:  issue.priority,
+    timestamp: issue.created_at,
+  }).write();
+
   res.status(201).json(withReporterName(issue));
 });
 
