@@ -289,35 +289,34 @@ function CleanerCard({ stat }) {
               Service: {stat.rooms_service ?? 0}
             </span>
           </div>
-          {/* Szczegóły opcji serwisu */}
-          {stat.rooms_service > 0 && stat.service_options && (() => {
-            const OPTS = [
-              { key: 'cleaned', icon: '🧹', label: 'Zimmer gereinigt' },
-              { key: 'sweet',   icon: '🍬', label: 'Süßigkeitenbeutel' },
-              { key: 'dnd',     icon: '🚫', label: 'Bitte nicht stören' },
-              { key: 'none',    icon: '—',  label: 'Ohne Auswahl' },
-            ];
-            const visible = OPTS.filter(o => (stat.service_options[o.key] ?? 0) > 0);
-            if (!visible.length) return null;
-            return (
-              <div className="mt-2 ml-1 rounded-xl overflow-hidden"
-                style={{ border: '1px solid #FFE0B2' }}>
-                {visible.map((o, i) => (
+          {/* Szczegóły opcji serwisu — zawsze gdy rooms_service > 0 */}
+          {stat.rooms_service > 0 && (
+            <div className="mt-2 ml-1 rounded-xl overflow-hidden"
+              style={{ border: '1px solid #FFE0B2' }}>
+              {[
+                { key: 'cleaned', icon: '🧹', label: 'Zimmer gereinigt' },
+                { key: 'sweet',   icon: '🍬', label: 'Süßigkeitenbeutel' },
+                { key: 'dnd',     icon: '🚫', label: 'Bitte nicht stören' },
+                { key: 'none',    icon: '—',  label: 'Ohne Auswahl' },
+              ].map((o, i) => {
+                const count = stat.service_options?.[o.key] ?? 0;
+                return (
                   <div key={o.key}
                     className="flex items-center justify-between px-2.5 py-1.5 text-xs"
                     style={{
                       background: i % 2 === 0 ? '#FFF8F0' : '#FFF3E0',
-                      color: '#7F8C8D',
+                      color: count > 0 ? '#5D6D7E' : '#BDC3C7',
                     }}>
                     <span>{o.icon} {o.label}</span>
-                    <span className="font-bold" style={{ color: '#E65100' }}>
-                      {stat.service_options[o.key]}×
+                    <span className="font-bold"
+                      style={{ color: count > 0 ? '#E65100' : '#BDC3C7' }}>
+                      {count}×
                     </span>
                   </div>
-                ))}
-              </div>
-            );
-          })()}
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <StatRow icon="🏢" label="Gemeinschaftsbereiche"   value={stat.areas_done}                         highlight={stat.areas_done > 0} />
