@@ -7,6 +7,11 @@ const app  = express();
 const PORT = process.env.PORT || 3001;
 const isProd = process.env.NODE_ENV === 'production';
 
+// Health check dla Railway — musi odpowiadać natychmiast, bez zależności od session/DB
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Railway/Heroku terminują HTTPS przed serwerem — trust proxy żeby secure cookies działały
 if (isProd) app.set('trust proxy', 1);
 
@@ -51,6 +56,6 @@ if (isProd) {
   });
 }
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Serwer działa na porcie ${PORT} [${isProd ? 'produkcja' : 'development'}]`);
 });
