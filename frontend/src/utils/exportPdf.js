@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { roomLabel } from './room';
 
 // ── Kolory Nordhotels ────────────────────────────────────────────
 const NAVY   = [27, 79, 114];    // #1B4F72
@@ -41,7 +42,7 @@ function fmtBusiest(bd) {
 function entryLabel(entry) {
   if (entry.type === 'room') {
     const typ = entry.task_type === 'checkout' ? 'Abreise' : 'Service';
-    return `Zimmer ${entry.room_number} (${typ})`;
+    return `Zimmer ${roomLabel(entry.room_number, entry.floor)} (${typ})`;
   }
   if (entry.type === 'area') return entry.area_name;
   if (entry.type === 'task') return entry.description ?? '—';
@@ -144,8 +145,8 @@ export async function exportStatisticsPdf({ month, stats, history }) {
       ['Ø Abreise',           fmtMins(stat.avg_checkout_time)],
       ['Ø Service',           fmtMins(stat.avg_service_time)],
       ['Aktivster Tag',       fmtBusiest(stat.busiest_day)],
-      ['Schnellstes Zimmer',  stat.fastest_room ? `Zi. ${stat.fastest_room.number} — ${fmtMins(stat.fastest_room.mins)}` : '—'],
-      ['Langsamstes Zimmer',  stat.slowest_room ? `Zi. ${stat.slowest_room.number} — ${fmtMins(stat.slowest_room.mins)}` : '—'],
+      ['Schnellstes Zimmer',  stat.fastest_room ? `Zi. ${roomLabel(stat.fastest_room.number, stat.fastest_room.floor)} — ${fmtMins(stat.fastest_room.mins)}` : '—'],
+      ['Langsamstes Zimmer',  stat.slowest_room ? `Zi. ${roomLabel(stat.slowest_room.number, stat.slowest_room.floor)} — ${fmtMins(stat.slowest_room.mins)}` : '—'],
     ];
 
     autoTable(doc, {

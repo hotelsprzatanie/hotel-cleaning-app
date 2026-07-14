@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { exportStatisticsPdf } from '../utils/exportPdf';
+import { roomLabel } from '../utils/room';
 
 // ── Helpers ──────────────────────────────────────────────────────
 function fmt(mins) {
@@ -77,7 +78,7 @@ function entryMeta(entry) {
 }
 
 function entryTitle(entry) {
-  if (entry.type === 'room') return `Zimmer ${entry.room_number}`;
+  if (entry.type === 'room') return `Zimmer ${roomLabel(entry.room_number, entry.floor)}`;
   if (entry.type === 'area') return entry.area_name;
   if (entry.type === 'task') return entry.description;
   return '—';
@@ -352,7 +353,7 @@ function CleanerCard({ stat }) {
               <div className="flex-1 rounded-xl px-3 py-2 text-center"
                 style={{ background: '#EAFAF1', border: '1px solid #A9DFBF' }}>
                 <div className="text-xs mb-0.5" style={{ color: '#1E8449' }}>🚀 Schnellstes</div>
-                <div className="font-bold text-sm" style={{ color: '#1E8449' }}>Zi. {stat.fastest_room.number}</div>
+                <div className="font-bold text-sm" style={{ color: '#1E8449' }}>Zi. {roomLabel(stat.fastest_room.number, stat.fastest_room.floor)}</div>
                 <div className="text-xs font-medium" style={{ color: '#27AE60' }}>{fmt(stat.fastest_room.mins)}</div>
               </div>
             )}
@@ -360,7 +361,7 @@ function CleanerCard({ stat }) {
               <div className="flex-1 rounded-xl px-3 py-2 text-center"
                 style={{ background: '#FEF9E7', border: '1px solid #F9E79F' }}>
                 <div className="text-xs mb-0.5" style={{ color: '#B7950B' }}>🐢 Längstes</div>
-                <div className="font-bold text-sm" style={{ color: '#B7950B' }}>Zi. {stat.slowest_room.number}</div>
+                <div className="font-bold text-sm" style={{ color: '#B7950B' }}>Zi. {roomLabel(stat.slowest_room.number, stat.slowest_room.floor)}</div>
                 <div className="text-xs font-medium" style={{ color: '#D4AC0D' }}>{fmt(stat.slowest_room.mins)}</div>
               </div>
             )}

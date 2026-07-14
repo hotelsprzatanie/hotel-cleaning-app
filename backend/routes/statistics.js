@@ -119,8 +119,8 @@ router.get('/', requireManager, (req, res) => {
       avg_checkout_time: avg(checkout),
       avg_service_time:  avg(service),
       total_work_mins,
-      fastest_room: fastest ? { number: fastest.room_number, mins: fastest.duration_mins } : null,
-      slowest_room: slowest ? { number: slowest.room_number, mins: slowest.duration_mins } : null,
+      fastest_room: fastest ? { number: fastest.room_number, floor: fastest.floor, mins: fastest.duration_mins } : null,
+      slowest_room: slowest ? { number: slowest.room_number, floor: slowest.floor, mins: slowest.duration_mins } : null,
       busiest_day:  busiestDay ? { date: busiestDay, count: busiestDayCount } : null,
     };
   });

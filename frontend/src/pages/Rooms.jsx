@@ -5,6 +5,7 @@ import Modal from '../components/Modal';
 import StatusBadge from '../components/StatusBadge';
 import CompletionModal from '../components/CompletionModal';
 import { formatDuration } from '../utils/time';
+import { roomLabel } from '../utils/room';
 
 // ── Opcje serwisowe ─────────────────────────────────────────────
 const SERVICE_OPTIONS = [
@@ -54,7 +55,7 @@ function ServiceCompletionModal({ room, onConfirm, onCancel }) {
         style={{ background: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
         <div>
           <p className="text-xs font-semibold mb-0.5" style={{ color: '#7F8C8D' }}>
-            Zimmer {room.number} · Service
+            Zimmer {roomLabel(room.number, room.floor)} · Service
           </p>
           <h2 className="text-xl font-bold" style={{ color: '#1B4F72' }}>Was wurde gemacht?</h2>
         </div>
@@ -187,7 +188,7 @@ function RoomModal({ room, cleaners, onClose, onSave, onReset }) {
   const tc = TYPE_COLORS[taskType] ?? TYPE_COLORS.none;
 
   return (
-    <Modal title={`Zimmer ${room.number}`} onClose={onClose}>
+    <Modal title={`Zimmer ${roomLabel(room.number, room.floor)}`} onClose={onClose}>
       {duration && (
         <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium"
           style={{ background: '#EBF5FB', color: '#1B4F72' }}>
@@ -368,7 +369,7 @@ export default function Rooms() {
   }
 
   async function handleDelete(room) {
-    if (!confirm(`Zimmer ${room.number} löschen?`)) return;
+    if (!confirm(`Zimmer ${roomLabel(room.number, room.floor)} löschen?`)) return;
     try { await api.deleteRoom(room.id); fetchRooms(); }
     catch (e) { alert(e.message); }
   }
@@ -413,7 +414,7 @@ export default function Rooms() {
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <span className="text-xl font-bold" style={{ color: tc.text }}>
-                        Zimmer {room.number}
+                        Zimmer {roomLabel(room.number, room.floor)}
                       </span>
                       {/* Etykieta typu w kolorze */}
                       <span className="ml-2 text-sm font-semibold" style={{ color: tc.subtext }}>
@@ -466,7 +467,7 @@ export default function Rooms() {
         {/* Modal Abreise — zwykłe pole uwag */}
         {completionRoom && (
           <CompletionModal
-            title={`Zimmer ${completionRoom.number}`}
+            title={`Zimmer ${roomLabel(completionRoom.number, completionRoom.floor)}`}
             onConfirm={handleCompletionConfirm}
             onCancel={() => setComplRoom(null)}
           />
@@ -501,6 +502,8 @@ export default function Rooms() {
     return acc;
   }, {});
 
+  const FLOOR_LABELS = { '0': 'Erdgeschoss', '1': 'Haus Borkum', '2': 'Kleine Möwe' };
+
   return (
     <>
       {/* Pasek filtrów */}
@@ -530,10 +533,19 @@ export default function Rooms() {
         </div>
       )}
 
-      {Object.keys(byFloor).sort((a, b) => a - b).map(floor => (
+      {Object.keys(byFloor).sort((a, b) => a - b).map((floor, idx) => (
         <div key={floor} className="mb-6">
-          <div className="section-title">
-            {({ '0': 'Erdgeschoss', '1': 'Haus Borkum', '2': 'Kleine Möwe' })[floor] ?? `${floor}. Etage`}
+          {idx > 0 && (
+            <div className="my-6" style={{ borderTop: '2px solid #D5DBDB' }} />
+          )}
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-lg font-bold" style={{ color: '#1B4F72' }}>
+              {FLOOR_LABELS[floor] ?? `${floor}. Etage`}
+            </h2>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: '#EBF5FB', color: '#2E86C1' }}>
+              {byFloor[floor].length} Zimmer
+            </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {byFloor[floor].map(room => {
@@ -550,7 +562,7 @@ export default function Rooms() {
                     boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
                   }}>
                   <div className="text-2xl font-bold mb-0.5" style={{ color: '#1B4F72' }}>
-                    {room.number}
+                    {roomLabel(room.number, room.floor)}
                   </div>
                   {/* Typ w kolorze */}
                   <div className="text-xs font-bold mb-2"

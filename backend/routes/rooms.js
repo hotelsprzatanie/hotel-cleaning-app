@@ -119,6 +119,7 @@ router.put('/:id/status', requireAuth, (req, res) => {
       user_name:        user.name,
       task_type:        room.task_type,
       room_number:      room.number,
+      floor:            room.floor,
       started_at:       room.started_at,
       finished_at:      now,
       completion_notes: completion_notes || null,
